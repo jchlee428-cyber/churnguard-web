@@ -236,9 +236,33 @@ if hasattr(st, "dialog"):
                     st.balloons()
                 else:
                     st.warning("제안 내용이나 필요하신 기능을 최소 1개 이상 선택/작성해 주세요.")
+
+    @st.dialog("✉️ ChurnGuard AI 공식 문의 안내")
+    def 이메일_문의_팝업창():
+        st.markdown(f"""
+        <div style="text-align: center; padding: 0.5rem 0 1rem 0;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.3rem;">📬</div>
+            <h4 style="margin: 0; color: #1E293B; font-weight: 800;">공식 문의 & B2B 제휴 이메일</h4>
+            <div style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 12px; padding: 0.85rem 1rem; margin: 1.1rem 0; font-size: 1.2rem; font-weight: 800; color: #0284C7; letter-spacing: 0.5px; user-select: all;">
+                {CONTACT_EMAIL}
+            </div>
+            <p style="color: #64748B; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.2rem;">
+                사내 맞춤형 AI 모델 도입, 대용량 분석 컨설팅, 서비스 제휴 등<br>
+                궁금하신 점을 편하게 보내주시면 영업일 기준 <strong>24시간 이내</strong>에 신속히 회신드리겠습니다.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        mcol1, mcol2 = st.columns(2)
+        with mcol1:
+            st.link_button("🌐 Gmail(웹)에서 바로 쓰기", f"https://mail.google.com/mail/?view=cm&fs=1&to={CONTACT_EMAIL}&su=[ChurnGuard AI] 문의 및 제휴 요청", use_container_width=True, type="primary")
+        with mcol2:
+            st.link_button("💻 기본 메일 앱으로 작성", f"mailto:{CONTACT_EMAIL}?subject=[ChurnGuard AI] 문의 및 제휴 요청", use_container_width=True)
 else:
     def 설문조사_팝업창():
         st.info("현재 환경에서는 하단의 빠른 피드백 폼을 이용해 주세요.")
+    def 이메일_문의_팝업창():
+        st.info(f"공식 문의 이메일: {CONTACT_EMAIL}")
 
 # -----------------------------------------------------------------------------
 # 1. 페이지 기본 설정 & 커스텀 CSS 스타일링
@@ -1052,7 +1076,8 @@ with fb_col2:
     if st.button("📋 1분 기능 제안 & 설문 제출", use_container_width=True):
         설문조사_팝업창()
 with fb_col3:
-    st.link_button(f"✉️ 이메일 직접 문의", f"mailto:{CONTACT_EMAIL}", use_container_width=True)
+    if st.button(f"✉️ 이메일 직접 문의 ({CONTACT_EMAIL})", use_container_width=True):
+        이메일_문의_팝업창()
 
 # 간편 빠른 의견 남기기 인앱 폼
 with st.expander("⚡ 대시보드 안에서 10초 만에 빠른 한 줄 피드백 남기기", expanded=False):
