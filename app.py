@@ -13,6 +13,8 @@ import pandas as pd
 import numpy as np
 import os
 import json
+import io
+import re
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit.components.v1 as components
@@ -33,8 +35,8 @@ GA_MEASUREMENT_ID = st.secrets.get("GA_MEASUREMENT_ID", "G-VN0GQDTV49")
 
 # 2. 고객 피드백 & 문의 창구 링크 (실제 운영 URL로 변경 가능)
 KAKAO_OPENCHAT_URL = "https://open.kakao.com/o/gmUdOLMi"  # 카카오톡 1:1 오픈채팅방 링크
-GOOGLE_FORM_URL = "https://forms.gle/ChurnGuardFeedback"     # 구글 폼 기능제안 설문 링크
 CONTACT_EMAIL = "jchlee428@gmail.com"                        # 공식 지원 및 B2B 제휴 이메일
+ADMIN_PIN = st.secrets.get("ADMIN_PIN", "7777")              # 관리자 통계/설문 원본 열람용 보안 PIN (기본값: 7777)
 
 def inject_google_analytics(ga_id: str):
     """Google Analytics 4 (GA4) 추적 태그를 메인 페이지 DOM에 안전하게 주입합니다.
@@ -180,6 +182,33 @@ def load_all_surveys():
         except Exception:
             pass
     return []
+
+def 연락처_마스킹(text):
+    """개인정보 보호를 위해 연락처(휴대폰 번호, 이메일)를 마스킹 처리합니다."""
+    if not text or pd.isna(text):
+        return "-"
+    s = str(text).strip()
+    if not s:
+        return "-"
+    # 이메일 마스킹 (예: jchlee428@gmail.com -> jc****@gmail.com)
+    if "@" in s:
+        parts = s.split("@")
+        local = parts[0]
+        domain = parts[1] if len(parts) > 1 else ""
+        if len(local) <= 2:
+            masked_local = local[0] + "*"
+        else:
+            masked_local = local[:2] + "*" * (len(local) - 2)
+        return f"{masked_local}@{domain}"
+    # 휴대폰 번호 마스킹 (예: 010-1234-5678 -> 010-****-5678)
+    phone_pattern = re.compile(r'(\d{2,3})[-.\s]?(\d{3,4})[-.\s]?(\d{4})')
+    m = phone_pattern.search(s)
+    if m:
+        return f"{m.group(1)}-****-{m.group(3)}"
+    # 일반 텍스트 마스킹
+    if len(s) > 4:
+        return s[:2] + "*" * (len(s) - 4) + s[-2:]
+    return s[:1] + "*" * (len(s) - 1)
 
 if hasattr(st, "dialog"):
     @st.dialog("📋 ChurnGuard AI 기능 제안 & 고객 설문조사")
@@ -371,6 +400,32 @@ st.markdown("""
     }
     .stTabs [data-baseweb="tab-border"] {
         display: none !important;
+    }
+
+    /* =========================================================================
+       🖨️ A4 용지 인쇄 & 경영진 보고서 PDF 저장 전용 스타일링
+       ========================================================================= */
+    @media print {
+        header[data-testid="stHeader"],
+        [data-testid="stSidebar"],
+        [data-testid="stToolbar"],
+        .stTabs [data-baseweb="tab-list"],
+        #scroll-to-top-link,
+        footer {
+            display: none !important;
+        }
+        .block-container {
+            padding: 1rem !important;
+            max-width: 100% !important;
+        }
+        .main-header, .sub-header {
+            color: #0F172A !important;
+            -webkit-text-fill-color: #0F172A !important;
+        }
+        .metric-card {
+            box-shadow: none !important;
+            border: 1px solid #CBD5E1 !important;
+        }
     }
 
     /* =========================================================================
@@ -622,6 +677,83 @@ def 샘플_고객_데이터_생성(n=500):
     })
     return df
 
+@st.cache_data
+def 엑셀_업로드_템플릿_생성():
+    """사용자가 즉시 다운로드하여 사용할 수 있는 엑셀(.xlsx) 및 CSV 샘플 서식 데이터를 생성합니다."""
+    예시_데이터 = pd.DataFrame({
+        "고객명": ["홍길동", "김영희", "이철수", "박민수", "정다운", "최성호", "강지은", "윤태호", "임수진", "한승우"],
+        "성별": ["남성", "여성", "남성", "남성", "여성", "남성", "여성", "남성", "여성", "남성"],
+        "나이": [34, 28, 45, 52, 23, 39, 41, 31, 26, 48],
+        "회원등급": ["우수(2등급)", "일반(3등급)", "최우수(1등급)", "일반(3등급)", "우수(2등급)", "일반(3등급)", "최우수(1등급)", "일반(3등급)", "우수(2등급)", "일반(3등급)"],
+        "최근경과일(일)": [12, 45, 5, 60, 20, 38, 8, 55, 15, 42],
+        "누적구매액(원)": [450000, 120000, 1850000, 80000, 320000, 150000, 2400000, 95000, 280000, 190000],
+        "결합서비스수": [2, 0, 3, 0, 1, 0, 2, 0, 1, 0]
+    })
+    
+    excel_buffer = io.BytesIO()
+    with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+        예시_데이터.to_excel(writer, index=False, sheet_name="고객데이터_업로드양식")
+    excel_data = excel_buffer.getvalue()
+    
+    csv_data = 예시_데이터.to_csv(index=False).encode('utf-8-sig')
+    return excel_data, csv_data
+
+def 스마트_컬럼_자동_매핑(df):
+    """사용자가 업로드한 엑셀/CSV의 비표준 컬럼명과 값을 표준 규격으로 자동 변환합니다."""
+    mapped = df.copy()
+    
+    SYNONYM_MAP = {
+        "고객명": ["고객명", "고객id", "이름", "회원명", "고객코드", "고객번호", "name", "id", "customer_id", "user_id", "userid", "client"],
+        "성별": ["성별", "gender", "sex"],
+        "나이": ["나이", "연령", "연령대", "age"],
+        "회원등급": ["회원등급", "등급", "회원구분", "pclass", "grade", "membership", "tier", "class"],
+        "최근경과일(일)": ["최근경과일(일)", "최근경과일", "미방문일", "경과일", "recency", "days_since_last_order", "last_visit", "days"],
+        "누적구매액(원)": ["누적구매액(원)", "누적구매액", "구매액", "총구매액", "매출", "결제금액", "fare", "monetary", "total_spend", "amount", "revenue"],
+        "결합서비스수": ["결합서비스수", "결합상품", "결합수", "이용서비스수", "가족수", "services", "family_size", "products"]
+    }
+    
+    col_rename = {}
+    for col in mapped.columns:
+        clean_col = str(col).strip().lower().replace(" ", "").replace("_", "")
+        for standard_name, synonyms in SYNONYM_MAP.items():
+            if standard_name in mapped.columns:
+                continue
+            for syn in synonyms:
+                clean_syn = syn.strip().lower().replace(" ", "").replace("_", "")
+                if clean_col == clean_syn:
+                    col_rename[col] = standard_name
+                    break
+            if col in col_rename:
+                break
+                
+    if col_rename:
+        mapped = mapped.rename(columns=col_rename)
+        
+    # 성별 정규화
+    if "성별" in mapped.columns:
+        def norm_gender(v):
+            s = str(v).strip().lower()
+            if s in ["남", "남자", "남성", "m", "male", "0"]:
+                return "남성"
+            elif s in ["여", "여자", "여성", "f", "female", "1"]:
+                return "여성"
+            return "남성"
+        mapped["성별"] = mapped["성별"].apply(norm_gender)
+        
+    # 회원등급 정규화
+    if "회원등급" in mapped.columns:
+        def norm_grade(v):
+            s = str(v).strip().lower()
+            if "1" in s or "최우수" in s or "vip" in s or "first" in s:
+                return "최우수(1등급)"
+            elif "2" in s or "우수" in s or "gold" in s or "second" in s:
+                return "우수(2등급)"
+            else:
+                return "일반(3등급)"
+        mapped["회원등급"] = mapped["회원등급"].apply(norm_grade)
+        
+    return mapped
+
 # -----------------------------------------------------------------------------
 # 4. 실전 딥러닝 추론 파이프라인
 # -----------------------------------------------------------------------------
@@ -632,7 +764,7 @@ def 호칭_추출(이름_문자열):
         return 'Mr'
 
 def 이탈확률_계산_엔진(df, threshold=0.7):
-    결과 = df.copy()
+    결과 = 스마트_컬럼_자동_매핑(df)
     n = len(결과)
     
     # 1. 컬럼 정제 및 매핑
@@ -808,11 +940,51 @@ with st.sidebar:
     이탈기준 = st.slider("고위험군 판정 기준 (이탈 확률)", 50, 90, 70, step=5) / 100.0
     
     st.divider()
-    st.subheader("📁 데이터 업로드")
-    업로드 = st.file_uploader("CSV 또는 엑셀 파일 업로드", type=["csv", "xlsx", "xls"])
+    st.subheader("📁 데이터 업로드 & 표준 서식")
     
-    if st.button("🔄 기본 500명 샘플 데이터로 복원"):
-        st.session_state["use_sample"] = True
+    # 1. 엑셀/CSV 업로드용 표준 템플릿 다운로드 버튼
+    tmpl_excel, tmpl_csv = 엑셀_업로드_템플릿_생성()
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        st.download_button(
+            label="📥 엑셀 서식 (.xlsx)",
+            data=tmpl_excel,
+            file_name="ChurnGuard_고객업로드_표준양식.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+            help="10개 예시 행이 포함된 완성형 엑셀 템플릿 다운로드"
+        )
+    with col_t2:
+        st.download_button(
+            label="📥 CSV 서식 (.csv)",
+            data=tmpl_csv,
+            file_name="ChurnGuard_고객업로드_표준양식.csv",
+            mime="text/csv",
+            use_container_width=True,
+            help="쉼표 구분 CSV 표준 템플릿 다운로드"
+        )
+        
+    with st.expander("📌 필수 컬럼 가이드 (7대 항목)", expanded=False):
+        st.markdown("""
+        * **고객명**: 고객 이름 또는 고유 ID (예: 홍길동, C-1001)
+        * **성별**: 남성 / 여성 (남/여, male/female 호환)
+        * **나이**: 고객 만 나이 (숫자)
+        * **회원등급**: 최우수(1등급) / 우수(2등급) / 일반(3등급)
+        * **최근경과일(일)**: 마지막 구매 후 경과 일수
+        * **누적구매액(원)**: 총 결제 금액 (원 단위)
+        * **결합서비스수**: 연계 멤버십/부가서비스 개수
+        """)
+
+    업로드 = st.file_uploader("CSV 또는 엑셀 파일 업로드", type=["csv", "xlsx", "xls"], key="file_uploader_widget")
+    
+    # 새로운 파일이 업로드되면 샘플 강제 복원 모드 해제
+    if 업로드 is not None:
+        if st.session_state.get("last_uploaded_filename") != 업로드.name:
+            st.session_state["use_sample_override"] = False
+            st.session_state["last_uploaded_filename"] = 업로드.name
+
+    if st.button("🔄 기본 500명 샘플 데이터로 복원", use_container_width=True):
+        st.session_state["use_sample_override"] = True
         st.rerun()
 
 # -----------------------------------------------------------------------------
@@ -833,19 +1005,22 @@ else:
     st.markdown(f'<div class="ai-badge">🟡 경량화 엔진 가동 중 &nbsp;|&nbsp; 👥 누적 방문 <strong>{total_count:,}</strong>회 (오늘 <strong>{today_count:,}</strong>회)</div>', unsafe_allow_html=True)
 
 # 데이터 로딩
-if 업로드 is not None:
+is_sample_mode = st.session_state.get("use_sample_override", False) or (업로드 is None)
+
+if not is_sample_mode and 업로드 is not None:
     try:
         if 업로드.name.endswith(".csv"):
             raw_df = pd.read_csv(업로드)
         else:
             raw_df = pd.read_excel(업로드)
-        st.success(f"'{업로드.name}' 파일 정상 로드 완료! (총 {len(raw_df):,}행)")
+        raw_df = 스마트_컬럼_자동_매핑(raw_df)
+        st.success(f"'{업로드.name}' 파일 정상 로드 및 스마트 컬럼 매핑 완료! (총 {len(raw_df):,}행)")
     except Exception as e:
         st.error(f"파일을 읽는 중 오류가 발생했습니다: {e}")
         raw_df = 샘플_고객_데이터_생성(500)
 else:
     raw_df = 샘플_고객_데이터_생성(500)
-    st.info("💡 현재 [500명 가상 이커머스 고객 샘플 데이터]로 시연 중입니다. 사이드바에서 보유하신 엑셀/CSV 파일을 업로드하실 수 있습니다.")
+    st.info("💡 현재 [500명 가상 이커머스 고객 샘플 데이터]로 시연 중입니다. 사이드바에서 표준 엑셀 양식을 다운로드하여 보유하신 고객 데이터를 분석해 보세요.")
 
 # 딥러닝 분석 실행
 분석_df = 이탈확률_계산_엔진(raw_df.copy(), threshold=이탈기준)
@@ -1135,6 +1310,47 @@ with tab4:
     st.subheader("📄 AI 고객 이탈 위험도 1-Page 진단 요약서")
     acc_text = f"{preproc_params.get('accuracy', 82.4)}%" if preproc_params else "82.4%"
     
+    rep_col1, rep_col2 = st.columns([1, 1])
+    with rep_col1:
+        if st.button("🖨️ 진단 보고서 바로 인쇄 / PDF 저장 (원클릭)", type="primary", use_container_width=True):
+            components.html("""
+            <script>
+            (function() {
+                try {
+                    window.parent.print();
+                } catch(e) {
+                    window.print();
+                }
+            })();
+            </script>
+            """, height=0, width=0)
+            
+    with rep_col2:
+        report_md_content = f"""# [경영진 브리핑 보고서] 고객 이탈 위험 분석 및 방어 전략
+* 분석 일자: {pd.Timestamp.now().strftime('%Y년 %m월 %d일')}
+* 분석 엔진: TensorFlow Keras 앙상블 딥러닝 신경망 (검증 적중률 {acc_text})
+* 총 분석 대상: {총고객:,}명
+
+## 1. 주요 발견점 (Key Findings)
+* 전체 고객의 {고위험비율:.1f}% ({고위험고객:,}명)이 30일 이내 서비스 이탈 가능성이 매우 높은 고위험군으로 식별되었습니다.
+* 방어 조치가 없을 경우 예상되는 월간 매출 손실액은 약 {예상손실액 / 10000:,.0f}만 원입니다.
+* AI 딥러닝 피처 분석 결과, '단독 이용 고객(결합 서비스 없음)'과 '일반(3등급) 회원' 군에서 이탈 쏠림 현상이 두드러졌습니다.
+
+## 2. AI 추천 실행 전략 (Action Plans)
+1. [고위험군 {고위험고객}명 즉시 조치]: 추출된 타깃 명단에 한해 20% 한정 재방문 쿠폰 집중 발송 (예상 방어 성공률 35%, 매출 {방어기대매출 / 10000:,.0f}만 원 방어 기대)
+2. [중위험군 {중위험고객}명 조기 관리]: 멤버십 결합 혜택 안내를 통한 결합률 증대 프로모션 시행
+3. [비용 절감 효과]: 안전군(상위 {100 - 고위험비율:.1f}%)에 대한 불필요한 무차별 할인 중단으로 마케팅 비용 월 300~500만 원 즉시 절감
+
+발행: ChurnGuard AI (https://churnguardweb.streamlit.app)
+"""
+        st.download_button(
+            label="📥 요약 진단서 텍스트(.md) 다운로드",
+            data=report_md_content.encode("utf-8"),
+            file_name=f"ChurnGuard_진단보고서_{pd.Timestamp.now().strftime('%Y%m%d')}.md",
+            mime="text/markdown",
+            use_container_width=True
+        )
+
     st.markdown(f"""
     ---
     ### **[경영진 브리핑 보고서] 고객 이탈 위험 분석 및 방어 전략**
@@ -1153,7 +1369,7 @@ with tab4:
     3. **비용 절감 효과**: 안전군(상위 {100 - 고위험비율:.1f}%)에 대한 불필요한 무차별 할인 중단으로 **마케팅 비용 월 300~500만 원 즉시 절감**
     ---
     """)
-    st.caption("💡 상단 브라우저 인쇄(`Ctrl + P`) 기능을 통해 위 진단서를 PDF로 저장하여 보고용으로 즉시 제출할 수 있습니다.")
+    st.caption("💡 상단 [🖨️ 진단 보고서 바로 인쇄 / PDF 저장] 버튼 또는 키보드 단축키(`Ctrl + P`)를 누르시면 보고서 형태로 즉시 출력 또는 PDF 저장이 가능합니다.")
 
 # -----------------------------------------------------------------------------
 # 9. 사용자 피드백 & 문의 창구 (Voice of Customer & Inquiries)
@@ -1227,15 +1443,57 @@ with st.expander("📊 [대시보드 관리자 전용] 실시간 방문자 통�
         fig_vis.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20))
         st.plotly_chart(fig_vis, use_container_width=True)
 
+    st.divider()
+    sec_col1, sec_col2 = st.columns([2, 1])
+    with sec_col1:
+        st.markdown("**🔐 관리자 보안 인증 (연락처 원본 열람 & 데이터 내보내기)**")
+        st.caption("개인정보 보호를 위해 일반 방문자에게는 연락처가 자동 마스킹(`010-****-1234`) 처리됩니다.")
+    with sec_col2:
+        input_pin = st.text_input("관리자 PIN 암호 (초기값: 7777)", type="password", key="admin_pin_input", placeholder="PIN 입력")
+        
+    is_admin_auth = (input_pin == ADMIN_PIN)
+    
+    if is_admin_auth:
+        st.success("✅ 관리자 인증 완료: 고객 연락처 원본 열람 및 CSV 다운로드가 가능합니다.")
+    elif input_pin:
+        st.error("❌ 비밀번호가 올바르지 않습니다. 마스킹된 데이터가 표시됩니다.")
+
     tab_fb, tab_sv = st.tabs(["📋 접수된 1분 설문 & 기능 제안", "💬 접수된 한 줄 피드백"])
     with tab_fb:
         if all_surveys:
-            st.dataframe(pd.DataFrame(all_surveys)[::-1], use_container_width=True, hide_index=True)
+            sv_df = pd.DataFrame(all_surveys)[::-1]
+            if not is_admin_auth and "연락처" in sv_df.columns:
+                display_sv_df = sv_df.copy()
+                display_sv_df["연락처"] = display_sv_df["연락처"].apply(연락처_마스킹)
+            else:
+                display_sv_df = sv_df
+                
+            st.dataframe(display_sv_df, use_container_width=True, hide_index=True)
+            
+            if is_admin_auth:
+                csv_surveys = sv_df.to_csv(index=False).encode('utf-8-sig')
+                st.download_button(
+                    label="📥 설문 응답 전체 원본 CSV 다운로드 (관리자용)",
+                    data=csv_surveys,
+                    file_name="ChurnGuard_고객설문응답_전체.csv",
+                    mime="text/csv",
+                    key="dl_admin_surveys_btn"
+                )
         else:
             st.info("아직 제출된 1분 설문이 없습니다. 상단의 [📋 1분 기능 제안 & 설문 제출] 버튼을 눌러 테스트해 보세요!")
     with tab_sv:
         if all_fb:
-            st.dataframe(pd.DataFrame(all_fb)[::-1], use_container_width=True, hide_index=True)
+            fb_df = pd.DataFrame(all_fb)[::-1]
+            st.dataframe(fb_df, use_container_width=True, hide_index=True)
+            if is_admin_auth:
+                csv_feedbacks = fb_df.to_csv(index=False).encode('utf-8-sig')
+                st.download_button(
+                    label="📥 한 줄 피드백 전체 CSV 다운로드 (관리자용)",
+                    data=csv_feedbacks,
+                    file_name="ChurnGuard_한줄피드백_전체.csv",
+                    mime="text/csv",
+                    key="dl_admin_feedback_btn"
+                )
         else:
             st.info("아직 제출된 고객 피드백이 없습니다.")
 
