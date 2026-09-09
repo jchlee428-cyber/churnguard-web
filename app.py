@@ -271,7 +271,7 @@ st.set_page_config(
     page_title="ChurnGuard AI - 고객 이탈 예측 & 방어 대시보드",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # GA4 사용자 유입 & 체류 시간 추적기 주입
@@ -310,6 +310,7 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         border: 1px solid #eef0f3;
         text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .metric-title {
         font-size: 0.9rem;
@@ -372,15 +373,70 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 모바일 반응형 2x2 그리드 & 좌우 스크롤 화살표 제거 */
+    /* =========================================================================
+       📱 모바일 100% 반응형 최적화 (스마트폰 & 태블릿 화면)
+       ========================================================================= */
     @media (max-width: 768px) {
-        /* 1. 작고 누르기 힘든 모바일 스크롤 화살표 숨김 */
+        /* 1. 기본 본문 여백 축소 (화면 공간 극대화) */
+        .block-container {
+            padding-top: 1.2rem !important;
+            padding-bottom: 3rem !important;
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+
+        /* 2. 헤더 및 서브헤더 모바일 폰트 크기 최적화 */
+        .main-header {
+            font-size: 1.45rem !important;
+            line-height: 1.35 !important;
+            margin-bottom: 0.4rem !important;
+            word-break: keep-all !important;
+        }
+        .sub-header {
+            font-size: 0.85rem !important;
+            line-height: 1.45 !important;
+            margin-bottom: 0.8rem !important;
+            word-break: keep-all !important;
+        }
+        .ai-badge {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.65rem !important;
+            line-height: 1.4 !important;
+            display: inline-block !important;
+            word-break: keep-all !important;
+        }
+
+        /* 3. 상단 4대 KPI 메트릭 카드 2x2 격자 그리드 배치 */
+        div[data-testid="stHorizontalBlock"]:has(> div > div > .metric-card),
+        div[data-testid="stHorizontalBlock"]:has(.metric-card) {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+            width: 100% !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] {
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+        }
+        .metric-card {
+            padding: 0.85rem 0.4rem !important;
+            border-radius: 12px !important;
+        }
+        .metric-title {
+            font-size: 0.75rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        .metric-value {
+            font-size: 1.28rem !important;
+            line-height: 1.2 !important;
+        }
+
+        /* 4. 4대 탭(Tab) 2x2 그리드 & 좌우 화살표 제거 */
         button[aria-label="Scroll tabs left"],
         button[aria-label="Scroll tabs right"] {
             display: none !important;
         }
-
-        /* 2. 상위 스크롤 래퍼 오버플로우 해제 */
         .stTabs > div,
         .stTabs div[data-baseweb="tab-list"],
         .stTabs [role="tablist"] {
@@ -388,8 +444,6 @@ st.markdown("""
             height: auto !important;
             max-width: 100% !important;
         }
-
-        /* 3. 모바일 화면에서 2열 그리드로 한눈에 4개 탭 정렬 */
         .stTabs [role="tablist"],
         .stTabs [data-baseweb="tab-list"] {
             display: grid !important;
@@ -399,26 +453,78 @@ st.markdown("""
             margin-bottom: 1.2rem !important;
             width: 100% !important;
         }
-
-        /* 4. 엄지손가락 터치에 최적화된 큰 탭 버튼 */
         .stTabs [role="tab"],
         .stTabs [data-baseweb="tab"] {
             width: 100% !important;
             height: auto !important;
-            min-height: 48px !important;
+            min-height: 46px !important;
             padding: 8px 4px !important;
             text-align: center !important;
             justify-content: center !important;
             white-space: normal !important;
             box-sizing: border-box !important;
         }
-
         .stTabs [role="tab"] p,
         .stTabs [data-baseweb="tab"] p {
-            font-size: 0.86rem !important;
+            font-size: 0.84rem !important;
             font-weight: 700 !important;
             margin: 0 !important;
             line-height: 1.3 !important;
+        }
+
+        /* 5. 탭 2 라디오 필터 칩 래핑 (가로 넘침 방지) */
+        .stRadio div[role="radiogroup"] {
+            flex-wrap: wrap !important;
+            gap: 6px !important;
+        }
+        .stRadio div[role="radiogroup"] label {
+            background: #F1F5F9 !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            margin-right: 0 !important;
+            font-size: 0.82rem !important;
+        }
+
+        /* 6. 모바일 터치 최적화 버튼 (최소 터치 높이 46px) */
+        button, a[data-testid="stLinkButton"] {
+            min-height: 46px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* 7. 하단 피드백 3개 버튼 1열 전체 너비 스택 배치 */
+        div[data-testid="stHorizontalBlock"]:has(> div > div > a[data-testid="stLinkButton"]),
+        div[data-testid="stHorizontalBlock"]:has(> div > div > button) {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(> div > div > a[data-testid="stLinkButton"]) > div[data-testid="column"],
+        div[data-testid="stHorizontalBlock"]:has(> div > div > button) > div[data-testid="column"] {
+            width: 100% !important;
+        }
+
+        /* 8. 팝업 모달창 너비 최적화 (모바일 잘림 방지) */
+        div[data-baseweb="modal"] div[role="dialog"] {
+            width: 94vw !important;
+            max-width: 94vw !important;
+            margin: 0 auto !important;
+            padding: 1.2rem 0.9rem !important;
+            border-radius: 16px !important;
+        }
+
+        /* 9. 모바일 폼 입력창 자동 줌 방지 (iOS 16px 룰) */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+
+        /* 10. 데이터프레임 모바일 가로 스크롤 매끄럽게 처리 */
+        [data-testid="stDataFrame"] {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
         }
     }
 </style>
@@ -820,7 +926,10 @@ with tab1:
             color="등급", color_discrete_map=색상맵,
             hole=0.45
         )
-        fig1.update_layout(margin=dict(t=20, b=20, l=10, r=10))
+        fig1.update_layout(
+            margin=dict(t=20, b=20, l=10, r=10),
+            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+        )
         st.plotly_chart(fig1, use_container_width=True)
         
     with c2:
