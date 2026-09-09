@@ -29,7 +29,7 @@ except ImportError:
 # =============================================================================
 # 1. Google Analytics 4 (GA4) 측정 ID (예: "G-XXXXXXXXXX")
 #    - Streamlit Secrets(환경설정) 또는 아래 따옴표 안에 측정 ID를 입력하시면 자동 활성화됩니다.
-GA_MEASUREMENT_ID = st.secrets.get("GA_MEASUREMENT_ID", "G-XXXXXXXXXX")
+GA_MEASUREMENT_ID = st.secrets.get("GA_MEASUREMENT_ID", "G-VN0GQDTV49")
 
 # 2. 고객 피드백 & 문의 창구 링크 (실제 운영 URL로 변경 가능)
 KAKAO_OPENCHAT_URL = "https://open.kakao.com/o/sChurnGuard"  # 카카오톡 1:1 오픈채팅방 링크
