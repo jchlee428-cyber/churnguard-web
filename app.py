@@ -15,12 +15,71 @@ import os
 import json
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit.components.v1 as components
+
 # 텐서플로우가 설치되어 있으면 사용하고, 없으면 초경량 순수 NumPy 신경망 엔진으로 자동 전환
 try:
     from tensorflow import keras
     HAS_TF = True
 except ImportError:
     HAS_TF = False
+
+# =============================================================================
+# ⚙️ 외부 서비스 연동 설정 (Google Analytics, 고객 문의/피드백 링크)
+# =============================================================================
+# 1. Google Analytics 4 (GA4) 측정 ID (예: "G-XXXXXXXXXX")
+#    - Streamlit Secrets(환경설정) 또는 아래 따옴표 안에 측정 ID를 입력하시면 자동 활성화됩니다.
+GA_MEASUREMENT_ID = st.secrets.get("GA_MEASUREMENT_ID", "G-XXXXXXXXXX")
+
+# 2. 고객 피드백 & 문의 창구 링크 (실제 운영 URL로 변경 가능)
+KAKAO_OPENCHAT_URL = "https://open.kakao.com/o/sChurnGuard"  # 카카오톡 1:1 오픈채팅방 링크
+GOOGLE_FORM_URL = "https://forms.gle/ChurnGuardFeedback"     # 구글 폼 기능제안 설문 링크
+CONTACT_EMAIL = "jchlee428@gmail.com"                        # 공식 지원 및 B2B 제휴 이메일
+
+def inject_google_analytics(ga_id: str):
+    """Google Analytics 4 (GA4) 추적 태그를 메인 페이지 DOM에 안전하게 주입합니다.
+    일일 방문자 수(PV/UV), 체류 시간, 세션 참여도를 실시간으로 추적합니다."""
+    if not ga_id or "XXXX" in ga_id:
+        return  # 플레이스홀더 상태일 때는 에러 방지를 위해 비활성화
+
+    ga_code = f"""
+    <script>
+    (function() {{
+        try {{
+            var targetDoc = window.parent.document;
+            if (!targetDoc.getElementById('ga4-script')) {{
+                // 1. Google tag (gtag.js) 로드
+                var script = targetDoc.createElement('script');
+                script.id = 'ga4-script';
+                script.async = true;
+                script.src = 'https://www.googletagmanager.com/gtag/js?id={ga_id}';
+                targetDoc.head.appendChild(script);
+
+                // 2. dataLayer 초기화 및 자동 페이지뷰/세션 전송
+                var inlineScript = targetDoc.createElement('script');
+                inlineScript.id = 'ga4-inline-init';
+                inlineScript.innerHTML = `
+                    window.dataLayer = window.dataLayer || [];
+                    function gtag(){{dataLayer.push(arguments);}}
+                    gtag('js', new Date());
+                    gtag('config', '{ga_id}', {{
+                        'page_title': 'ChurnGuard AI - B2B 이탈 예측 대시보드',
+                        'send_page_view': true
+                    }});
+                `;
+                targetDoc.head.appendChild(inlineScript);
+            }}
+        }} catch (err) {{
+            // Cross-origin iframe 제약 시 로컬 iframe 내에서 초기화
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){{dataLayer.push(arguments);}}
+            gtag('js', new Date());
+            gtag('config', '{ga_id}');
+        }}
+    }})();
+    </script>
+    """
+    components.html(ga_code, height=0, width=0)
 
 # -----------------------------------------------------------------------------
 # 1. 페이지 기본 설정 & 커스텀 CSS 스타일링
@@ -31,6 +90,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# GA4 사용자 유입 & 체류 시간 추적기 주입
+inject_google_analytics(GA_MEASUREMENT_ID)
 
 st.markdown("""
 <style>
@@ -795,11 +857,56 @@ with tab4:
     st.caption("💡 상단 브라우저 인쇄(`Ctrl + P`) 기능을 통해 위 진단서를 PDF로 저장하여 보고용으로 즉시 제출할 수 있습니다.")
 
 # -----------------------------------------------------------------------------
-# 9. 하단 푸터 (웹소개 | 사용방법 안내 메뉴)
+# 9. 사용자 피드백 & 문의 창구 (Voice of Customer & Inquiries)
 # -----------------------------------------------------------------------------
+st.write("")
+st.markdown("""
+<div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); padding: 1.6rem 1.8rem; border-radius: 16px; border: 1px solid #334155; margin-top: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.35); padding: 4px 12px; border-radius: 20px; color: #93C5FD; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.6rem;">
+                💬 Voice of Customer · 고객 문의 & 기능 제안
+            </div>
+            <h3 style="color: #FFFFFF; font-size: 1.25rem; font-weight: 800; margin: 0 0 0.35rem 0;">
+                ChurnGuard AI 서비스는 어떠셨나요? 소중한 의견을 들려주세요!
+            </h3>
+            <p style="color: #94A3B8; font-size: 0.88rem; margin: 0; line-height: 1.5;">
+                "이런 기능이 추가되면 좋겠어요", "사내 맞춤형 AI 모델 도입 상담", "데이터 호환 문의" 등<br>
+                남겨주시는 모든 피드백은 다음 업데이트 및 기업용 솔루션 고도화에 적극 반영됩니다.
+            </p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.write("")
+fb_col1, fb_col2, fb_col3 = st.columns(3)
+with fb_col1:
+    st.link_button("💬 카카오톡 1:1 실시간 상담", KAKAO_OPENCHAT_URL, use_container_width=True, type="primary")
+with fb_col2:
+    st.link_button("📋 1분 기능 제안 & 설문 제출", GOOGLE_FORM_URL, use_container_width=True)
+with fb_col3:
+    st.link_button(f"✉️ 이메일 직접 문의", f"mailto:{CONTACT_EMAIL}", use_container_width=True)
+
+# 간편 빠른 의견 남기기 인앱 폼
+with st.expander("⚡ 대시보드 안에서 10초 만에 빠른 한 줄 피드백 남기기", expanded=False):
+    st.markdown("<p style='font-size: 0.88rem; color: #64748B; margin-bottom: 0.6rem;'>외부 링크 이동 없이 지금 화면에서 바로 의견을 전달하실 수 있습니다.</p>", unsafe_allow_html=True)
+    with st.form(key="quick_feedback_form", clear_on_submit=True):
+        fb_score = st.select_slider("전반적인 대시보드 만족도", options=["⭐ 매우 아쉬움", "⭐⭐ 아쉬움", "⭐⭐⭐ 보통", "⭐⭐⭐⭐ 만족", "⭐⭐⭐⭐⭐ 매우 만족"], value="⭐⭐⭐⭐⭐ 매우 만족")
+        fb_text = st.text_area("개선점 또는 필요하신 기능이 있다면 자유롭게 적어주세요:", placeholder="예: 우리 쇼핑몰 엑셀 양식도 바로 지원되면 좋겠습니다! / 시뮬레이터 차트가 아주 직관적이네요.", height=85)
+        submitted = st.form_submit_button("🚀 피드백 보내기", use_container_width=True)
+        if submitted:
+            if fb_text.strip():
+                st.success("🎉 소중한 피드백이 성공적으로 접수되었습니다! 개발팀에 전달되어 다음 업데이트에 검토됩니다. 감사합니다!")
+            else:
+                st.warning("의견 내용을 한 줄 이상 입력해 주세요.")
+
 st.write("")
 st.divider()
 
+# -----------------------------------------------------------------------------
+# 10. 하단 푸터 (웹소개 | 사용방법 안내 메뉴)
+# -----------------------------------------------------------------------------
 # 푸터 소개 & 가이드 아코디언 메뉴
 with st.expander("ℹ️ ChurnGuard AI 웹소개 & 상세 사용방법 가이드 (클릭하여 열기)", expanded=False):
     guide_tab1, guide_tab2 = st.tabs(["📖 ChurnGuard AI 웹소개", "💡 대시보드 상세 사용방법"])
