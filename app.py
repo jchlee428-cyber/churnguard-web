@@ -32,7 +32,7 @@ except ImportError:
 GA_MEASUREMENT_ID = st.secrets.get("GA_MEASUREMENT_ID", "G-VN0GQDTV49")
 
 # 2. 고객 피드백 & 문의 창구 링크 (실제 운영 URL로 변경 가능)
-KAKAO_OPENCHAT_URL = "https://open.kakao.com/o/sChurnGuard"  # 카카오톡 1:1 오픈채팅방 링크
+KAKAO_OPENCHAT_URL = "https://open.kakao.com/o/gmUdOLMi"  # 카카오톡 1:1 오픈채팅방 링크
 GOOGLE_FORM_URL = "https://forms.gle/ChurnGuardFeedback"     # 구글 폼 기능제안 설문 링크
 CONTACT_EMAIL = "jchlee428@gmail.com"                        # 공식 지원 및 B2B 제휴 이메일
 
