@@ -711,7 +711,7 @@ with st.sidebar:
 # -----------------------------------------------------------------------------
 # 6. 메인 헤더 & AI 상태 뱃지
 # -----------------------------------------------------------------------------
-st.markdown('<div class="main-header">ChurnGuard AI : 스마트 고객 이탈 예측 & 방어 대시보드</div>', unsafe_allow_html=True)
+st.markdown('<div id="top-of-page"></div><div class="main-header">ChurnGuard AI : 스마트 고객 이탈 예측 & 방어 대시보드</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">학습된 딥러닝 앙상블 신경망을 통해 이탈 위험 고객을 선제 감지하고 맞춤형 방어 액션을 제시합니다.</div>', unsafe_allow_html=True)
 
 visit_stats = get_or_record_visit_stats()
@@ -1203,7 +1203,41 @@ st.markdown("""
         Powered by Python 3.10 · TensorFlow 2.x Keras · Streamlit · All Rights Reserved (무단 복제 및 배포 금지)
     </div>
     <div style="margin-top: 0.3rem; font-size: 0.75rem;">
-        © 2026 ChurnGuard AI. All rights reserved. | <a href="#churndguard-ai" style="color:#3B82F6; text-decoration:none;">맨 위로 이동 ↑</a>
+        © 2026 ChurnGuard AI. All rights reserved. | <a href="#top-of-page" target="_self" id="scroll-to-top-link" style="color:#3B82F6; text-decoration:none; font-weight:700; cursor:pointer;">맨 위로 이동 ↑</a>
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# 부드러운 상단 스크롤(Smooth Scroll-to-Top) 인터랙션 주입
+components.html("""
+<script>
+(function() {
+    function setupScrollToTop() {
+        try {
+            var parentDoc = window.parent.document;
+            var link = parentDoc.getElementById('scroll-to-top-link');
+            if (link && !link.dataset.hasScrollListener) {
+                link.dataset.hasScrollListener = 'true';
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var scrollContainer = parentDoc.querySelector('[data-testid="stAppViewContainer"]') || 
+                                          parentDoc.querySelector('section.main') || 
+                                          parentDoc.documentElement || 
+                                          parentDoc.body;
+                    if (scrollContainer && scrollContainer.scrollTo) {
+                        scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        window.parent.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            }
+        } catch (err) {
+            console.log('Scroll to top fallback:', err);
+        }
+    }
+    setupScrollToTop();
+    setTimeout(setupScrollToTop, 500);
+    setTimeout(setupScrollToTop, 1500);
+})();
+</script>
+""", height=0, width=0)
