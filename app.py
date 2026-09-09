@@ -1350,7 +1350,7 @@ with tab4:
 2. [중위험군 {중위험고객}명 조기 관리]: 멤버십 결합 혜택 안내를 통한 결합률 증대 프로모션 시행
 3. [비용 절감 효과]: 안전군(상위 {100 - 고위험비율:.1f}%)에 대한 불필요한 무차별 할인 중단으로 마케팅 비용 월 300~500만 원 즉시 절감
 
-발행: ChurnGuard AI (https://churnguardweb.streamlit.app)
+발행: ChurnGuard AI (https://churnguard-web.streamlit.app)
 """
         st.download_button(
             label="📥 요약 진단서 텍스트(.md) 다운로드",

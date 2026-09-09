@@ -3,7 +3,7 @@
 > **엑셀(CSV) 업로드 하나로 끝내는 실시간 고객 이탈 예측 & 방어 자동화 대시보드**  
 > 초경량 딥러닝 신경망 엔진 기반 피처 엔지니어링 & 4대 핵심 경영 KPI 실시간 시각화 솔루션
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://churnguardweb.streamlit.app)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://churnguard-web.streamlit.app)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
