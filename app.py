@@ -144,6 +144,102 @@ def load_all_feedbacks():
             pass
     return []
 
+SURVEY_FILE = "survey_responses.json"
+
+def save_survey_response(data):
+    """사용자가 제출한 1분 설문 및 기능 제안을 영구 보관합니다."""
+    now_str = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    entry = {
+        "접수일시": now_str,
+        "비즈니스형태": data.get("비즈니스형태", ""),
+        "희망기능": ", ".join(data.get("필요기능", [])),
+        "제안내용": data.get("제안내용", ""),
+        "연락처": data.get("연락처", "")
+    }
+    surveys = []
+    if os.path.exists(SURVEY_FILE):
+        try:
+            with open(SURVEY_FILE, "r", encoding="utf-8") as f:
+                surveys = json.load(f)
+        except Exception:
+            surveys = []
+    surveys.append(entry)
+    try:
+        with open(SURVEY_FILE, "w", encoding="utf-8") as f:
+            json.dump(surveys, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception:
+        return False
+
+def load_all_surveys():
+    """저장된 고객 설문 응답 전체를 불러옵니다."""
+    if os.path.exists(SURVEY_FILE):
+        try:
+            with open(SURVEY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
+if hasattr(st, "dialog"):
+    @st.dialog("📋 ChurnGuard AI 기능 제안 & 고객 설문조사")
+    def 설문조사_팝업창():
+        st.markdown("""
+        <p style="color: #64748B; font-size: 0.88rem; margin-bottom: 1rem; line-height: 1.5;">
+            소중한 시간을 내어주셔서 감사합니다! 남겨주시는 제안은 다음 버전 업데이트와 B2B 기능 출시에 최우선으로 반영됩니다. (소요 시간: 약 1분)
+        </p>
+        """, unsafe_allow_html=True)
+        
+        with st.form(key="survey_modal_form"):
+            biz_type = st.selectbox(
+                "1. 대표님의 주요 비즈니스 / 업종 형태는 무엇인가요?",
+                ["🛍️ 쇼핑몰 / 이커머스 (소비재, 패션, 뷰티, 식품 등)",
+                 "🔄 정기구독 / SaaS / 유료 멤버십 서비스",
+                 "🏢 IT 솔루션 / 플랫폼 / 스타트업",
+                 "🏬 오프라인 매장 / 프랜차이즈 / 학원 / 피트니스",
+                 "💼 기타 전문직 / 프리랜서 / 개인사업자"]
+            )
+            
+            features_needed = st.multiselect(
+                "2. 가장 필요하거나 추가되길 바라는 기능은 무엇인가요? (복수 선택 가능)",
+                ["📱 고위험군 대상 카카오 알림톡/문자 자동 발송 연동",
+                 "🧠 우리 회사 전용 데이터 맞춤형 AI 모델 파인튜닝",
+                 "⚡ 10만 건 이상 대용량 빅데이터 초고속 일괄 분석",
+                 "📊 경영진 제출용 맞춤형 고급 PDF 진단서 커스터마이징",
+                 "🤝 고객 이탈 방어 실무 전략 1:1 방문 컨설팅",
+                 "🔌 사내 ERP/CRM 시스템과의 실시간 API 연동"],
+                default=["📱 고위험군 대상 카카오 알림톡/문자 자동 발송 연동"]
+            )
+            
+            custom_suggestion = st.text_area(
+                "3. 개선점이나 구체적으로 필요하신 기능을 자유롭게 적어주세요:",
+                placeholder="예: 네이버 스마트스토어나 쿠팡 엑셀 양식을 업로드해도 컬럼명을 자동으로 맞춰주면 좋겠습니다!",
+                height=90
+            )
+            
+            contact_info = st.text_input(
+                "4. 기능 출시 알림이나 답변을 받으실 연락처 (선택 사항)",
+                placeholder="이메일(example@company.com) 또는 휴대폰 번호"
+            )
+            
+            submitted = st.form_submit_button("🚀 제안 및 설문 제출하기", use_container_width=True, type="primary")
+            if submitted:
+                if custom_suggestion.strip() or features_needed:
+                    survey_data = {
+                        "비즈니스형태": biz_type,
+                        "필요기능": features_needed,
+                        "제안내용": custom_suggestion.strip(),
+                        "연락처": contact_info.strip()
+                    }
+                    save_survey_response(survey_data)
+                    st.success("🎉 소중한 의견이 성공적으로 접수되었습니다! 검토 후 적극 반영하겠습니다. 감사합니다!")
+                    st.balloons()
+                else:
+                    st.warning("제안 내용이나 필요하신 기능을 최소 1개 이상 선택/작성해 주세요.")
+else:
+    def 설문조사_팝업창():
+        st.info("현재 환경에서는 하단의 빠른 피드백 폼을 이용해 주세요.")
+
 # -----------------------------------------------------------------------------
 # 1. 페이지 기본 설정 & 커스텀 CSS 스타일링
 # -----------------------------------------------------------------------------
@@ -953,7 +1049,8 @@ fb_col1, fb_col2, fb_col3 = st.columns(3)
 with fb_col1:
     st.link_button("💬 카카오톡 1:1 실시간 상담", KAKAO_OPENCHAT_URL, use_container_width=True, type="primary")
 with fb_col2:
-    st.link_button("📋 1분 기능 제안 & 설문 제출", GOOGLE_FORM_URL, use_container_width=True)
+    if st.button("📋 1분 기능 제안 & 설문 제출", use_container_width=True):
+        설문조사_팝업창()
 with fb_col3:
     st.link_button(f"✉️ 이메일 직접 문의", f"mailto:{CONTACT_EMAIL}", use_container_width=True)
 
@@ -973,11 +1070,13 @@ with st.expander("⚡ 대시보드 안에서 10초 만에 빠른 한 줄 피드�
 
 # 관리자 전용 실시간 방문자 & 피드백 통계 아코디언
 with st.expander("📊 [대시보드 관리자 전용] 실시간 방문자 통계 & 고객 피드백 현황 열람", expanded=False):
-    adm_col1, adm_col2, adm_col3 = st.columns(3)
+    adm_col1, adm_col2, adm_col3, adm_col4 = st.columns(4)
     adm_col1.metric("총 누적 방문(PV)", f"{total_count:,} 회")
     adm_col2.metric("오늘 방문자", f"{today_count:,} 회")
     all_fb = load_all_feedbacks()
-    adm_col3.metric("접수된 고객 피드백", f"{len(all_fb)} 건")
+    all_surveys = load_all_surveys()
+    adm_col3.metric("한 줄 피드백", f"{len(all_fb)} 건")
+    adm_col4.metric("1분 상세 설문", f"{len(all_surveys)} 건")
 
     st.write("")
     if visit_stats.get("daily"):
@@ -993,12 +1092,17 @@ with st.expander("📊 [대시보드 관리자 전용] 실시간 방문자 통�
         fig_vis.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20))
         st.plotly_chart(fig_vis, use_container_width=True)
 
-    if all_fb:
-        st.write("##### 💬 접수된 고객 피드백 목록")
-        fb_df = pd.DataFrame(all_fb)[::-1]
-        st.dataframe(fb_df, use_container_width=True, hide_index=True)
-    else:
-        st.info("아직 제출된 고객 피드백이 없습니다. 위 피드백 폼에서 직접 테스트해 보세요!")
+    tab_fb, tab_sv = st.tabs(["📋 접수된 1분 설문 & 기능 제안", "💬 접수된 한 줄 피드백"])
+    with tab_fb:
+        if all_surveys:
+            st.dataframe(pd.DataFrame(all_surveys)[::-1], use_container_width=True, hide_index=True)
+        else:
+            st.info("아직 제출된 1분 설문이 없습니다. 상단의 [📋 1분 기능 제안 & 설문 제출] 버튼을 눌러 테스트해 보세요!")
+    with tab_sv:
+        if all_fb:
+            st.dataframe(pd.DataFrame(all_fb)[::-1], use_container_width=True, hide_index=True)
+        else:
+            st.info("아직 제출된 고객 피드백이 없습니다.")
 
 st.write("")
 st.divider()
