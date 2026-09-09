@@ -29,14 +29,23 @@ except ImportError:
 # =============================================================================
 # ⚙️ 외부 서비스 연동 설정 (Google Analytics, 고객 문의/피드백 링크)
 # =============================================================================
+# -----------------------------------------------------------------------------
+# ⚙️ 안전한 환경 변수 & Secrets 안전 취득 헬퍼
+# -----------------------------------------------------------------------------
+def safe_get_secret(key: str, default: str) -> str:
+    """secrets.toml 파일 부재 시 StreamlitSecretNotFoundError 예외를 방지하고 기본값을 반환합니다."""
+    try:
+        return st.secrets.get(key, default)
+    except Exception:
+        return default
+
 # 1. Google Analytics 4 (GA4) 측정 ID (예: "G-XXXXXXXXXX")
-#    - Streamlit Secrets(환경설정) 또는 아래 따옴표 안에 측정 ID를 입력하시면 자동 활성화됩니다.
-GA_MEASUREMENT_ID = st.secrets.get("GA_MEASUREMENT_ID", "G-VN0GQDTV49")
+GA_MEASUREMENT_ID = safe_get_secret("GA_MEASUREMENT_ID", "G-VN0GQDTV49")
 
 # 2. 고객 피드백 & 문의 창구 링크 (실제 운영 URL로 변경 가능)
 KAKAO_OPENCHAT_URL = "https://open.kakao.com/o/gmUdOLMi"  # 카카오톡 1:1 오픈채팅방 링크
 CONTACT_EMAIL = "jchlee428@gmail.com"                        # 공식 지원 및 B2B 제휴 이메일
-ADMIN_PIN = st.secrets.get("ADMIN_PIN", "7777")              # 관리자 통계/설문 원본 열람용 보안 PIN (기본값: 7777)
+ADMIN_PIN = safe_get_secret("ADMIN_PIN", "7777")              # 관리자 통계/설문 원본 열람용 보안 PIN (기본값: 7777)
 
 def inject_google_analytics(ga_id: str):
     """Google Analytics 4 (GA4) 추적 태그를 메인 페이지 DOM에 안전하게 주입합니다.
