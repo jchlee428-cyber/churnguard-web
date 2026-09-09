@@ -81,6 +81,69 @@ def inject_google_analytics(ga_id: str):
     """
     components.html(ga_code, height=0, width=0)
 
+# =============================================================================
+# 📊 자체 내장 방문자 통계 & 피드백 저장 엔진 (Zero-Setup Analytics)
+# =============================================================================
+STATS_FILE = "visitor_stats.json"
+FEEDBACK_FILE = "user_feedback.json"
+
+def get_or_record_visit_stats():
+    """외부 가입 없이도 방문자 수(PV)와 오늘 방문자를 자체 집계합니다."""
+    today = pd.Timestamp.now().strftime("%Y-%m-%d")
+    now_str = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    stats = {"total_views": 0, "daily": {}, "last_visit": now_str}
+    
+    if os.path.exists(STATS_FILE):
+        try:
+            with open(STATS_FILE, "r", encoding="utf-8") as f:
+                stats = json.load(f)
+        except Exception:
+            pass
+            
+    if "session_counted" not in st.session_state:
+        st.session_state["session_counted"] = True
+        stats["total_views"] = stats.get("total_views", 0) + 1
+        daily = stats.get("daily", {})
+        daily[today] = daily.get(today, 0) + 1
+        stats["daily"] = daily
+        stats["last_visit"] = now_str
+        try:
+            with open(STATS_FILE, "w", encoding="utf-8") as f:
+                json.dump(stats, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+            
+    return stats
+
+def save_user_feedback(score_text, comment_text):
+    """사용자가 제출한 피드백을 JSON 데이터베이스에 영구 보관합니다."""
+    now_str = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    entry = {"접수일시": now_str, "만족도": score_text, "의견내용": comment_text}
+    feedbacks = []
+    if os.path.exists(FEEDBACK_FILE):
+        try:
+            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                feedbacks = json.load(f)
+        except Exception:
+            feedbacks = []
+    feedbacks.append(entry)
+    try:
+        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(feedbacks, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception:
+        return False
+
+def load_all_feedbacks():
+    """저장된 고객 피드백 전체를 불러옵니다."""
+    if os.path.exists(FEEDBACK_FILE):
+        try:
+            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return []
+
 # -----------------------------------------------------------------------------
 # 1. 페이지 기본 설정 & 커스텀 CSS 스타일링
 # -----------------------------------------------------------------------------
@@ -531,10 +594,16 @@ with st.sidebar:
 st.markdown('<div class="main-header">ChurnGuard AI : 스마트 고객 이탈 예측 & 방어 대시보드</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">학습된 딥러닝 앙상블 신경망을 통해 이탈 위험 고객을 선제 감지하고 맞춤형 방어 액션을 제시합니다.</div>', unsafe_allow_html=True)
 
+visit_stats = get_or_record_visit_stats()
+today_key = pd.Timestamp.now().strftime("%Y-%m-%d")
+today_count = visit_stats.get("daily", {}).get(today_key, 1)
+total_count = visit_stats.get("total_views", 1)
+
 if keras_model is not None and preproc_params is not None:
-    st.markdown(f'<div class="ai-badge">🟢 딥러닝 신경망 모델(best_churn_model.keras) 실시간 서빙 중 · 검증 정확도 {preproc_params.get("accuracy", 82.4)}%</div>', unsafe_allow_html=True)
+    acc_val = preproc_params.get("accuracy", 82.4)
+    st.markdown(f'<div class="ai-badge">🟢 딥러닝 실시간 서빙 중 (정확도 {acc_val}%) &nbsp;|&nbsp; 👥 누적 방문 <strong>{total_count:,}</strong>회 (오늘 <strong>{today_count:,}</strong>회)</div>', unsafe_allow_html=True)
 else:
-    st.markdown('<div class="ai-badge">🟡 경량화 휴리스틱 추론 엔진 가동 중</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ai-badge">🟡 경량화 엔진 가동 중 &nbsp;|&nbsp; 👥 누적 방문 <strong>{total_count:,}</strong>회 (오늘 <strong>{today_count:,}</strong>회)</div>', unsafe_allow_html=True)
 
 # 데이터 로딩
 if 업로드 is not None:
@@ -897,9 +966,39 @@ with st.expander("⚡ 대시보드 안에서 10초 만에 빠른 한 줄 피드�
         submitted = st.form_submit_button("🚀 피드백 보내기", use_container_width=True)
         if submitted:
             if fb_text.strip():
-                st.success("🎉 소중한 피드백이 성공적으로 접수되었습니다! 개발팀에 전달되어 다음 업데이트에 검토됩니다. 감사합니다!")
+                save_user_feedback(fb_score, fb_text)
+                st.success("🎉 소중한 피드백이 성공적으로 접수되었습니다! 개발팀에 전달되어 다음 업데이트에 적극 반영하겠습니다. 감사합니다!")
             else:
                 st.warning("의견 내용을 한 줄 이상 입력해 주세요.")
+
+# 관리자 전용 실시간 방문자 & 피드백 통계 아코디언
+with st.expander("📊 [대시보드 관리자 전용] 실시간 방문자 통계 & 고객 피드백 현황 열람", expanded=False):
+    adm_col1, adm_col2, adm_col3 = st.columns(3)
+    adm_col1.metric("총 누적 방문(PV)", f"{total_count:,} 회")
+    adm_col2.metric("오늘 방문자", f"{today_count:,} 회")
+    all_fb = load_all_feedbacks()
+    adm_col3.metric("접수된 고객 피드백", f"{len(all_fb)} 건")
+
+    st.write("")
+    if visit_stats.get("daily"):
+        daily_df = pd.DataFrame(list(visit_stats["daily"].items()), columns=["방문일자", "방문횟수"]).sort_values("방문일자")
+        fig_vis = px.bar(
+            daily_df.tail(14),
+            x="방문일자",
+            y="방문횟수",
+            title="📈 최근 일별 방문자 유입 추이",
+            text_auto=True,
+            color_discrete_sequence=["#3B82F6"]
+        )
+        fig_vis.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20))
+        st.plotly_chart(fig_vis, use_container_width=True)
+
+    if all_fb:
+        st.write("##### 💬 접수된 고객 피드백 목록")
+        fb_df = pd.DataFrame(all_fb)[::-1]
+        st.dataframe(fb_df, use_container_width=True, hide_index=True)
+    else:
+        st.info("아직 제출된 고객 피드백이 없습니다. 위 피드백 폼에서 직접 테스트해 보세요!")
 
 st.write("")
 st.divider()
