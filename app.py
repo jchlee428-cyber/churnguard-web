@@ -377,19 +377,20 @@ st.markdown("""
        📱 모바일 100% 반응형 최적화 (스마트폰 & 태블릿 화면)
        ========================================================================= */
     @media (max-width: 768px) {
-        /* 1. 기본 본문 여백 축소 (화면 공간 극대화) */
+        /* 1. 상단 툴바(사이드바 >> 버튼, Share 등)와 제목이 겹치지 않도록 안전한 상단 여백 확보 */
         .block-container {
-            padding-top: 1.2rem !important;
+            padding-top: 4.5rem !important;
             padding-bottom: 3rem !important;
-            padding-left: 0.75rem !important;
-            padding-right: 0.75rem !important;
+            padding-left: 0.85rem !important;
+            padding-right: 0.85rem !important;
         }
 
-        /* 2. 헤더 및 서브헤더 모바일 폰트 크기 최적화 */
+        /* 2. 헤더 및 서브헤더 모바일 폰트 크기 및 여백 최적화 */
         .main-header {
             font-size: 1.45rem !important;
             line-height: 1.35 !important;
-            margin-bottom: 0.4rem !important;
+            margin-top: 0.6rem !important;
+            margin-bottom: 0.45rem !important;
             word-break: keep-all !important;
         }
         .sub-header {
