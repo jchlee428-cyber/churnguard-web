@@ -365,50 +365,110 @@ st.markdown("""
     .risk-med { color: #dd6b20; }
     .risk-low { color: #38a169; }
 
-    /* 프리미엄 세그먼트 탭(Pill Tab) 바 스타일링 */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px !important;
-        background-color: #F8FAFC !important;
-        padding: 6px 8px !important;
-        border-radius: 14px !important;
-        border: 1px solid #E2E8F0 !important;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-        margin-bottom: 1.8rem !important;
+    /* =========================================================================
+       🖥️ 대형 프리미엄 세그먼트 탭(Pill Tab) 바 스타일링 (데스크톱 최적화)
+       ========================================================================= */
+    div[data-testid="stTabs"] {
+        margin-top: 1rem !important;
+        margin-bottom: 2rem !important;
     }
 
+    /* 탭 바 전체 컨테이너 (시원하고 균형 잡힌 가로 바) */
+    div[data-testid="stTabs"] div[role="tablist"],
+    div[data-testid="stTabs"] [role="tablist"],
+    .stTabs [data-baseweb="tab-list"],
+    .stTabs [role="tablist"] {
+        display: flex !important;
+        gap: 12px !important;
+        background: #F1F5F9 !important;
+        padding: 8px 10px !important;
+        border-radius: 16px !important;
+        border: 1.5px solid #CBD5E1 !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+        margin-bottom: 2rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 개별 탭 버튼 (시원하게 4등분 균등 배치 + 큼직한 높이 & 폰트) */
+    div[data-testid="stTabs"] button[role="tab"],
+    div[data-testid="stTabs"] [role="tab"],
     .stTabs [data-baseweb="tab"] {
-        height: 48px !important;
-        white-space: pre-wrap !important;
-        background-color: transparent !important;
-        border-radius: 10px !important;
+        flex: 1 1 0px !important;
+        height: 54px !important;
+        min-height: 54px !important;
+        padding: 0 1.2rem !important;
+        border-radius: 12px !important;
+        border: 1.5px solid transparent !important;
+        background: transparent !important;
         color: #475569 !important;
-        font-size: 0.96rem !important;
-        font-weight: 700 !important;
-        padding: 0 1.3rem !important;
-        border: none !important;
+        cursor: pointer !important;
         transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
     }
 
+    /* 탭 내부 텍스트 폰트 크기 대폭 확대 (1.15rem / 약 18.5px & 볼드) */
+    div[data-testid="stTabs"] button[role="tab"] p,
+    div[data-testid="stTabs"] [role="tab"] p,
+    .stTabs [data-baseweb="tab"] p,
+    div[data-testid="stTabs"] button[role="tab"] div[data-testid="stMarkdownContainer"] p {
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        color: #475569 !important;
+        margin: 0 !important;
+        line-height: 1.3 !important;
+        letter-spacing: -0.3px !important;
+        white-space: nowrap !important;
+    }
+
+    /* 탭 마우스 오버(Hover) 시 부드러운 반응 */
+    div[data-testid="stTabs"] button[role="tab"]:hover,
+    div[data-testid="stTabs"] [role="tab"]:hover,
     .stTabs [data-baseweb="tab"]:hover {
-        background-color: #EEF2F6 !important;
+        background: rgba(255, 255, 255, 0.8) !important;
+        border-color: #CBD5E1 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"]:hover p,
+    div[data-testid="stTabs"] [role="tab"]:hover p {
         color: #0F172A !important;
-        transform: translateY(-1px) !important;
     }
 
+    /* 🌟 선택된 활성 탭 (압도적인 시인성: 화이트 카드 + 선명한 블루 보더 + 그림자) */
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"],
+    div[data-testid="stTabs"] [role="tab"][aria-selected="true"],
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%) !important;
+        background: #FFFFFF !important;
+        border: 2px solid #2563EB !important;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.18), 0 2px 5px rgba(0, 0, 0, 0.04) !important;
+        transform: translateY(-2px) !important;
+    }
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] p,
+    div[data-testid="stTabs"] [role="tab"][aria-selected="true"] p,
+    .stTabs [aria-selected="true"] p,
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] div[data-testid="stMarkdownContainer"] p {
         color: #1D4ED8 !important;
-        border: 1px solid #CBD5E1 !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06) !important;
         font-weight: 800 !important;
-        transform: translateY(-1px) !important;
+        font-size: 1.18rem !important;
     }
 
-    .stTabs [data-baseweb="tab-highlight"] {
+    /* Streamlit 기본 붉은 밑줄/하이라이트 바 완벽 제거 */
+    div[data-testid="stTabs"] [role="tab"] > div:nth-child(2),
+    div[data-testid="stTabs"] button[role="tab"] > div:nth-child(2),
+    div[data-testid="stTabs"] [role="tab"] > div:last-child:not(:first-child),
+    div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+    div[data-testid="stTabs"] [data-baseweb="tab-border"],
+    div[data-testid="stTabs"] [data-testid="stTabHighlight"],
+    div[data-testid="stTabs"] hr {
         display: none !important;
-    }
-    .stTabs [data-baseweb="tab-border"] {
-        display: none !important;
+        background-color: transparent !important;
+        height: 0px !important;
+        border: none !important;
     }
 
     /* =========================================================================
@@ -503,13 +563,16 @@ st.markdown("""
             display: none !important;
         }
         .stTabs > div,
+        div[data-testid="stTabs"] > div,
         .stTabs div[data-baseweb="tab-list"],
-        .stTabs [role="tablist"] {
+        .stTabs [role="tablist"],
+        div[data-testid="stTabs"] [role="tablist"] {
             overflow: visible !important;
             height: auto !important;
             max-width: 100% !important;
         }
         .stTabs [role="tablist"],
+        div[data-testid="stTabs"] [role="tablist"],
         .stTabs [data-baseweb="tab-list"] {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -519,19 +582,24 @@ st.markdown("""
             width: 100% !important;
         }
         .stTabs [role="tab"],
+        div[data-testid="stTabs"] [role="tab"],
+        div[data-testid="stTabs"] button[role="tab"],
         .stTabs [data-baseweb="tab"] {
             width: 100% !important;
             height: auto !important;
-            min-height: 46px !important;
+            min-height: 48px !important;
             padding: 8px 4px !important;
             text-align: center !important;
             justify-content: center !important;
             white-space: normal !important;
             box-sizing: border-box !important;
+            flex: none !important;
         }
         .stTabs [role="tab"] p,
+        div[data-testid="stTabs"] [role="tab"] p,
+        div[data-testid="stTabs"] button[role="tab"] p,
         .stTabs [data-baseweb="tab"] p {
-            font-size: 0.84rem !important;
+            font-size: 0.88rem !important;
             font-weight: 700 !important;
             margin: 0 !important;
             line-height: 1.3 !important;
