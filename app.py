@@ -370,16 +370,31 @@ st.markdown("""
         border-color: #93C5FD !important;
     }
 
-    /* 사이드바 내부 닫기(<<) 버튼 스타일링 */
+    /* 사이드바 내부 닫기(<<) 버튼 스타일링 - 라이트/다크 모드 불문 선명한 로열 블루 배지 & 상시 노출 */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarHeader"] [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+    }
+
     [data-testid="stSidebarCollapseButton"] button,
     [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"] {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        border-radius: 8px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+        border: 1.5px solid #60A5FA !important;
+        border-radius: 9px !important;
         color: #FFFFFF !important;
-        padding: 4px 10px !important;
+        padding: 5px 12px !important;
         height: 36px !important;
-        transition: all 0.2s ease !important;
+        box-shadow: 0 3px 12px rgba(37, 99, 235, 0.45), 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        cursor: pointer !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     [data-testid="stSidebarCollapseButton"] button span,
     [data-testid="stSidebarCollapseButton"] button span *,
@@ -390,15 +405,19 @@ st.markdown("""
     [data-testid="stSidebarCollapseButton"] button::after,
     [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"]::after {
         content: " 닫기" !important;
-        font-size: 0.82rem !important;
-        font-weight: 600 !important;
+        font-size: 0.84rem !important;
+        font-weight: 700 !important;
         color: #FFFFFF !important;
-        margin-left: 4px !important;
+        margin-left: 5px !important;
+        white-space: nowrap !important;
+        letter-spacing: -0.2px !important;
     }
     [data-testid="stSidebarCollapseButton"] button:hover,
     [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"]:hover {
-        background: rgba(255, 255, 255, 0.25) !important;
-        border-color: rgba(255, 255, 255, 0.45) !important;
+        transform: translateY(-2px) scale(1.04) !important;
+        background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%) !important;
+        box-shadow: 0 5px 16px rgba(37, 99, 235, 0.6) !important;
+        border-color: #93C5FD !important;
     }
 
     .main-header {
