@@ -537,17 +537,40 @@ st.markdown("""
             line-height: 1.3 !important;
         }
 
-        /* 5. 탭 2 라디오 필터 칩 래핑 (가로 넘침 방지) */
+        /* 5. 모바일 라디오 필터 칩 래핑 및 텍스트 시인성 확보 */
         .stRadio div[role="radiogroup"] {
             flex-wrap: wrap !important;
             gap: 6px !important;
         }
         .stRadio div[role="radiogroup"] label {
             background: #F1F5F9 !important;
+            border: 1px solid #CBD5E1 !important;
             padding: 6px 12px !important;
             border-radius: 8px !important;
             margin-right: 0 !important;
             font-size: 0.82rem !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        }
+        .stRadio div[role="radiogroup"] label p,
+        .stRadio div[role="radiogroup"] label span,
+        .stRadio div[role="radiogroup"] label div[data-testid="stMarkdownContainer"],
+        .stRadio div[role="radiogroup"] label div[data-testid="stMarkdownContainer"] * {
+            color: #0F172A !important;
+            font-weight: 700 !important;
+            -webkit-text-fill-color: #0F172A !important;
+        }
+        /* 선택된(체크된) 라디오 칩 스타일 강조 */
+        .stRadio div[role="radiogroup"] label:has(input:checked) {
+            background: #EFF6FF !important;
+            border: 1.5px solid #2563EB !important;
+        }
+        .stRadio div[role="radiogroup"] label:has(input:checked) p,
+        .stRadio div[role="radiogroup"] label:has(input:checked) span,
+        .stRadio div[role="radiogroup"] label:has(input:checked) div[data-testid="stMarkdownContainer"],
+        .stRadio div[role="radiogroup"] label:has(input:checked) div[data-testid="stMarkdownContainer"] * {
+            color: #1D4ED8 !important;
+            font-weight: 800 !important;
+            -webkit-text-fill-color: #1D4ED8 !important;
         }
 
         /* 6. 모바일 터치 최적화 버튼 (최소 터치 높이 46px) */
