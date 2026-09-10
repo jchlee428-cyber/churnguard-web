@@ -317,6 +317,90 @@ inject_google_analytics(GA_MEASUREMENT_ID)
 
 st.markdown("""
 <style>
+    /* =========================================================================
+       🚀 좌측 사이드바 열림(>>) 버튼 눈에 확 띄는 플로팅 배지 스타일링
+       ========================================================================= */
+    button[data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapsedControl"] button,
+    [data-testid="collapsedControl"] button {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important;
+        color: #FFFFFF !important;
+        border: 1.5px solid #60A5FA !important;
+        border-radius: 10px !important;
+        padding: 6px 14px !important;
+        height: 40px !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45), 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+        cursor: pointer !important;
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    button[data-testid="stExpandSidebarButton"] span,
+    button[data-testid="stExpandSidebarButton"] span *,
+    [data-testid="stSidebarCollapsedControl"] button span,
+    [data-testid="stSidebarCollapsedControl"] button span *,
+    [data-testid="collapsedControl"] button span,
+    [data-testid="collapsedControl"] button span * {
+        color: #FFFFFF !important;
+        fill: #FFFFFF !important;
+    }
+
+    /* 텍스트 라벨 추가로 사이드바 위치와 목적을 한눈에 각인 */
+    button[data-testid="stExpandSidebarButton"]::after,
+    [data-testid="stSidebarCollapsedControl"] button::after,
+    [data-testid="collapsedControl"] button::after {
+        content: " 사이드바 열기" !important;
+        color: #FFFFFF !important;
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
+        margin-left: 6px !important;
+        white-space: nowrap !important;
+        letter-spacing: -0.2px !important;
+    }
+
+    /* 마우스 오버(Hover) 시 세련된 입체 강조 */
+    button[data-testid="stExpandSidebarButton"]:hover,
+    [data-testid="stSidebarCollapsedControl"] button:hover,
+    [data-testid="collapsedControl"] button:hover {
+        transform: translateY(-2px) scale(1.04) !important;
+        background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%) !important;
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6) !important;
+        border-color: #93C5FD !important;
+    }
+
+    /* 사이드바 내부 닫기(<<) 버튼 스타일링 */
+    [data-testid="stSidebarCollapseButton"] button,
+    [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"] {
+        background: rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 8px !important;
+        color: #FFFFFF !important;
+        padding: 4px 10px !important;
+        height: 36px !important;
+        transition: all 0.2s ease !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button span,
+    [data-testid="stSidebarCollapseButton"] button span *,
+    [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"] svg {
+        fill: #FFFFFF !important;
+        color: #FFFFFF !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button::after,
+    [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"]::after {
+        content: " 닫기" !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        color: #FFFFFF !important;
+        margin-left: 4px !important;
+    }
+    [data-testid="stSidebarCollapseButton"] button:hover,
+    [data-testid="stSidebar"] button[data-testid="stSidebarCollapseButton"]:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(255, 255, 255, 0.45) !important;
+    }
+
     .main-header {
         font-size: 2.2rem;
         font-weight: 800;
@@ -557,6 +641,20 @@ st.markdown("""
         .metric-value {
             font-size: 1.28rem !important;
             line-height: 1.2 !important;
+        }
+
+        /* 모바일용 사이드바 토글 버튼 (간결한 '메뉴' 라벨) */
+        button[data-testid="stExpandSidebarButton"]::after,
+        [data-testid="stSidebarCollapsedControl"] button::after,
+        [data-testid="collapsedControl"] button::after {
+            content: " 메뉴" !important;
+            font-size: 0.82rem !important;
+        }
+        button[data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapsedControl"] button,
+        [data-testid="collapsedControl"] button {
+            height: 36px !important;
+            padding: 4px 10px !important;
         }
 
         /* 4. 4대 탭(Tab) 2x2 그리드 & 좌우 화살표 제거 */
