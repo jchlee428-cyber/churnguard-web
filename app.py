@@ -317,6 +317,29 @@ inject_google_analytics(GA_MEASUREMENT_ID)
 
 st.markdown("""
 <style>
+    /* =========================================================================
+       🚫 상단 우측 툴바(GitHub, Share, ★, 메뉴 등) 및 기본 푸터 숨김 처리
+       ========================================================================= */
+    #MainMenu {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    [data-testid="stToolbar"] {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    .stAppDeployButton {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    footer {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+
     .main-header {
         font-size: 2.2rem;
         font-weight: 800;
