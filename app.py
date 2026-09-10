@@ -1481,7 +1481,7 @@ with st.expander("📊 [대시보드 관리자 전용] 실시간 방문자 통�
         st.markdown("**🔐 관리자 보안 인증 (연락처 원본 열람 & 데이터 내보내기)**")
         st.caption("개인정보 보호를 위해 일반 방문자에게는 연락처가 자동 마스킹(`010-****-1234`) 처리됩니다.")
     with sec_col2:
-        input_pin = st.text_input("관리자 PIN 암호 (초기값: 7777)", type="password", key="admin_pin_input", placeholder="PIN 입력")
+        input_pin = st.text_input("관리자 PIN 암호", type="password", key="admin_pin_input", placeholder="PIN 번호 입력")
         
     is_admin_auth = (input_pin == ADMIN_PIN)
     
