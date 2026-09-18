@@ -1215,9 +1215,9 @@ total_count = visit_stats.get("total_views", 1)
 
 if keras_model is not None and preproc_params is not None:
     acc_val = preproc_params.get("accuracy", 82.4)
-    st.markdown(f'<div class="ai-badge">🟢 딥러닝 실시간 서빙 중 (정확도 {acc_val}%) &nbsp;|&nbsp; 👥 누적 방문 <strong>{total_count:,}</strong>회 (오늘 <strong>{today_count:,}</strong>회)</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ai-badge">🟢 딥러닝 실시간 서빙 중 (정확도 {acc_val}%) &nbsp;|&nbsp; ⚡ 초고속 실시간 추론 &nbsp;|&nbsp; 🔒 엔터프라이즈 보안 격리</div>', unsafe_allow_html=True)
 else:
-    st.markdown(f'<div class="ai-badge">🟡 경량화 엔진 가동 중 &nbsp;|&nbsp; 👥 누적 방문 <strong>{total_count:,}</strong>회 (오늘 <strong>{today_count:,}</strong>회)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ai-badge">🟡 경량화 엔진 가동 중 &nbsp;|&nbsp; ⚡ 실시간 통계 추론 &nbsp;|&nbsp; 🔒 로컬 격리 보안</div>', unsafe_allow_html=True)
 
 # 데이터 로딩
 is_sample_mode = st.session_state.get("use_sample_override", False) or (업로드 is None)
